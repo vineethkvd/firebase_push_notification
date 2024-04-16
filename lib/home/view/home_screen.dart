@@ -19,6 +19,7 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     notificationController.requestNotificationPermission();
     notificationController.firebaseInit();
+    notificationController.localNotificationInit();
     notificationController.getDeviceToken().then((value) {
       print("Token: $value");
     });
