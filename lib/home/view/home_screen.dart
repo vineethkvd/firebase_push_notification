@@ -18,6 +18,11 @@ class _HomeScreenState extends State<HomeScreen> {
     // TODO: implement initState
     super.initState();
     notificationController.requestNotificationPermission();
+    notificationController.firebaseInit();
+    notificationController.getDeviceToken().then((value) {
+      print("Token: $value");
+    });
+    notificationController.isTokenRefresh();
   }
   @override
   Widget build(BuildContext context) {
