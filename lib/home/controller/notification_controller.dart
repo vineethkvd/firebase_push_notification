@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -12,20 +14,20 @@ class NotificationController extends GetxController {
     // Initialize Firebase messaging
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       // Handle foreground messages
-      if (kDebugMode) {
+
         print("Foreground message received: ${message.notification?.body}");
         print("Foreground message received: ${message.notification?.title}");
-      }
+
       showNotification(message);
     });
 
-    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      // Handle background messages
-      if (kDebugMode) {
-        print("Foreground message received: ${message.notification?.body}");
-        print("Foreground message received: ${message.notification?.title}");
-      }
-    });
+    // FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+    //   // Handle background messages
+    //   if (kDebugMode) {
+    //     print("Foreground message received: ${message.notification?.body}");
+    //     print("Foreground message received: ${message.notification?.title}");
+    //   }
+    // });
   }
 
   Future<void> localNotificationInit() async {
@@ -40,29 +42,36 @@ class NotificationController extends GetxController {
       onDidReceiveNotificationResponse: (details) {},
     );
   }
+
   Future<void> showNotification(RemoteMessage message) async {
-
-    var androidPlatformChannelSpecifics = AndroidNotificationDetails(
-      'your_channel_id', // This is the ID of the channel.
-      'your_channel_name', // This is the name of the channel.
-      'your_channel_description', // This is the description of the channel.
+    AndroidNotificationChannel channel = AndroidNotificationChannel(
+      Random.secure().nextInt(100000).toString(),
+      'High Importance Notifications',
       importance: Importance.max,
-      priority: Priority.high,
     );
-    var iOSPlatformChannelSpecifics = IOSNotificationDetails();
-    var platformChannelSpecifics = NotificationDetails(
-        android: androidPlatformChannelSpecifics,
-        iOS: iOSPlatformChannelSpecifics);
-
-    // Show the notification
-    await _flutterLocalNotificationsPlugin.show(
-      0, // Notification ID
-      message.notification?.title, // Notification title
-      message.notification?.body, // Notification body
-      platformChannelSpecifics, // Notification details
-      payload: 'item x', // Custom data to pass
+    AndroidNotificationDetails androidNotificationDetails =
+        AndroidNotificationDetails(
+            channel.id.toString(), // id
+            channel.name.toString(), // name
+            channelDescription: 'your channel Description', // description
+            importance: Importance.high,
+            priority: Priority.high,
+            ticker: 'ticker');
+    const DarwinNotificationDetails darwinNotificationDetails =
+        DarwinNotificationDetails(
+            presentAlert: true, presentBadge: true, presentSound: true);
+    NotificationDetails notificationDetails = NotificationDetails(
+        android: androidNotificationDetails, iOS: darwinNotificationDetails);
+    Future.delayed(
+      Duration.zero,
+      () {
+        _flutterLocalNotificationsPlugin.show(
+            0,
+            message.notification!.title.toString(),
+            message.notification!.body.toString(),
+            notificationDetails);
+      },
     );
-
   }
 
   Future<void> requestNotificationPermission() async {
@@ -76,6 +85,10 @@ class NotificationController extends GetxController {
         sound: true);
     if (settings.authorizationStatus == AuthorizationStatus.authorized) {
       print("Permission granted");
+      final deviceToken = await getDeviceToken();
+      print("Token: $deviceToken");
+      localNotificationInit();
+      firebaseInit();
     } else {
       print("Permission denied or not determined");
     }
