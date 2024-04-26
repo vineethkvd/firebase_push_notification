@@ -18,8 +18,8 @@ class _HomeScreenState extends State<HomeScreen> {
     // TODO: implement initState
     super.initState();
     notificationController.requestNotificationPermission();
-    notificationController.firebaseInit();
-    notificationController.localNotificationInit();
+    notificationController.firebaseInit(context);
+    // notificationController.initLocalNotifications();
     notificationController.getDeviceToken().then((value) {
       print("Token: $value");
     });
@@ -27,9 +27,15 @@ class _HomeScreenState extends State<HomeScreen> {
   }
   @override
   Widget build(BuildContext context) {
+    print("token : ${notificationController.deviceToken.value}");
     return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.blueAccent,
+      ),
       body: Container(
-        child: Column(children: [],),
+        child: Column(children: [
+          Obx(() => Text("${notificationController.deviceToken.value}"))
+        ],),
       ),
     );
   }

@@ -1,22 +1,27 @@
 import 'dart:math';
 
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:get/get.dart';
 
 class NotificationController extends GetxController {
+  var deviceToken=''.obs;
   FirebaseMessaging messaging = FirebaseMessaging.instance;
   final FlutterLocalNotificationsPlugin _flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
 
-  Future<void> firebaseInit() async {
+  Future<void> firebaseInit(BuildContext context) async {
     // Initialize Firebase messaging
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       // Handle foreground messages
 
         print("Foreground message received: ${message.notification?.body}");
         print("Foreground message received: ${message.notification?.title}");
+
+
+        initLocalNotifications(context,message);
 
       showNotification(message);
     });
@@ -30,7 +35,7 @@ class NotificationController extends GetxController {
     // });
   }
 
-  Future<void> localNotificationInit() async {
+  Future<void> initLocalNotifications(BuildContext context,RemoteMessage message) async {
 // Initialize local notifications
     var initializationSettingsAndroid =
         const AndroidInitializationSettings('@mipmap/ic_launcher');
@@ -85,10 +90,10 @@ class NotificationController extends GetxController {
         sound: true);
     if (settings.authorizationStatus == AuthorizationStatus.authorized) {
       print("Permission granted");
-      final deviceToken = await getDeviceToken();
-      print("Token: $deviceToken");
-      localNotificationInit();
-      firebaseInit();
+      // //  deviceToken.value = await getDeviceToken();
+      // // print("Token: $deviceToken");
+      // localNotificationInit();
+      // firebaseInit();
     } else {
       print("Permission denied or not determined");
     }
