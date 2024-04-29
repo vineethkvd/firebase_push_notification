@@ -31,7 +31,9 @@ class _HomeScreenState extends State<HomeScreen> {
   }
   @override
   Widget build(BuildContext context) {
-    print("token : ${pushNotificationController.deviceToken.value}");
+    if (kDebugMode) {
+      print("token : ${pushNotificationController.deviceToken.value}");
+    }
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.blueAccent,
