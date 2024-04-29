@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
@@ -11,30 +12,33 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final NotificationController notificationController =
-  Get.put(NotificationController());
-  @override
+  final PushNotificationController pushNotificationController =
+  Get.put(PushNotificationController());
   void initState() {
-    // TODO: implement initState
-    super.initState();
-    notificationController.requestNotificationPermission();
-    notificationController.firebaseInit(context);
-    // notificationController.initLocalNotifications();
-    notificationController.getDeviceToken().then((value) {
-      print("Token: $value");
+    pushNotificationController.requestNotificationPermission();
+    pushNotificationController.forgroundMessage();
+    pushNotificationController.firebaseInit(context);
+    pushNotificationController.setupInteractMessage(context);
+    pushNotificationController.isTokenRefresh();
+
+    pushNotificationController.getDeviceToken().then((value) {
+      if (kDebugMode) {
+        print('device token');
+        print(value);
+      }
     });
-    notificationController.isTokenRefresh();
+    super.initState();
   }
   @override
   Widget build(BuildContext context) {
-    print("token : ${notificationController.deviceToken.value}");
+    print("token : ${pushNotificationController.deviceToken.value}");
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.blueAccent,
       ),
       body: Container(
         child: Column(children: [
-          Obx(() => Text("${notificationController.deviceToken.value}"))
+          Obx(() => Text("${pushNotificationController.deviceToken.value}"))
         ],),
       ),
     );

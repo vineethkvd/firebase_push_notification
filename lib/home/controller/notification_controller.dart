@@ -1,44 +1,54 @@
 import 'dart:math';
-
+import 'dart:io';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:get/get.dart';
 
-class NotificationController extends GetxController {
-  var deviceToken=''.obs;
+class PushNotificationController extends GetxController {
+  var deviceToken = ''.obs;
   FirebaseMessaging messaging = FirebaseMessaging.instance;
   final FlutterLocalNotificationsPlugin _flutterLocalNotificationsPlugin =
-      FlutterLocalNotificationsPlugin();
+  FlutterLocalNotificationsPlugin();
 
   Future<void> firebaseInit(BuildContext context) async {
-    // Initialize Firebase messaging
-    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      // Handle foreground messages
+    FirebaseMessaging.onMessage.listen((message) {
+      RemoteNotification? notification = message.notification;
+      AndroidNotification? android = message.notification!.android;
 
-        print("Foreground message received: ${message.notification?.body}");
-        print("Foreground message received: ${message.notification?.title}");
+      if (kDebugMode) {
+        print("notifications title:${notification!.title}");
+        print("notifications body:${notification.body}");
+        print('count:${android!.count}');
+        print('data:${message.data.toString()}');
+      }
 
+      if (Platform.isIOS) {
+        forgroundMessage();
+      }
 
-        initLocalNotifications(context,message);
-
-      showNotification(message);
+      if (Platform.isAndroid) {
+        initLocalNotifications(context, message);
+        showNotification(message);
+      }
     });
-
-    // FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-    //   // Handle background messages
-    //   if (kDebugMode) {
-    //     print("Foreground message received: ${message.notification?.body}");
-    //     print("Foreground message received: ${message.notification?.title}");
-    //   }
-    // });
   }
 
-  Future<void> initLocalNotifications(BuildContext context,RemoteMessage message) async {
+  Future forgroundMessage() async {
+    await FirebaseMessaging.instance
+        .setForegroundNotificationPresentationOptions(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
+  }
+
+  Future<void> initLocalNotifications(
+      BuildContext context, RemoteMessage message) async {
 // Initialize local notifications
     var initializationSettingsAndroid =
-        const AndroidInitializationSettings('@mipmap/ic_launcher');
+    const AndroidInitializationSettings('@mipmap/ic_launcher');
     var initializationSettingsIOS = const DarwinInitializationSettings();
     var initializationSettings = InitializationSettings(
         android: initializationSettingsAndroid, iOS: initializationSettingsIOS);
@@ -55,21 +65,21 @@ class NotificationController extends GetxController {
       importance: Importance.max,
     );
     AndroidNotificationDetails androidNotificationDetails =
-        AndroidNotificationDetails(
-            channel.id.toString(), // id
-            channel.name.toString(), // name
-            channelDescription: 'your channel Description', // description
-            importance: Importance.high,
-            priority: Priority.high,
-            ticker: 'ticker');
+    AndroidNotificationDetails(
+        channel.id.toString(), // id
+        channel.name.toString(), // name
+        channelDescription: 'your channel Description', // description
+        importance: Importance.high,
+        priority: Priority.high,
+        ticker: 'ticker');
     const DarwinNotificationDetails darwinNotificationDetails =
-        DarwinNotificationDetails(
-            presentAlert: true, presentBadge: true, presentSound: true);
+    DarwinNotificationDetails(
+        presentAlert: true, presentBadge: true, presentSound: true);
     NotificationDetails notificationDetails = NotificationDetails(
         android: androidNotificationDetails, iOS: darwinNotificationDetails);
     Future.delayed(
       Duration.zero,
-      () {
+          () {
         _flutterLocalNotificationsPlugin.show(
             0,
             message.notification!.title.toString(),
@@ -108,5 +118,31 @@ class NotificationController extends GetxController {
     messaging.onTokenRefresh.listen((String? newToken) {
       print("Token refreshed: $newToken");
     });
+  }
+
+  //handle tap on notification when app is in background or terminated
+  Future<void> setupInteractMessage(BuildContext context) async {
+    // when app is terminated
+    RemoteMessage? initialMessage =
+    await FirebaseMessaging.instance.getInitialMessage();
+
+    if (initialMessage != null) {
+      handleMessage(context, initialMessage);
+    }
+
+    //when app ins background
+    FirebaseMessaging.onMessageOpenedApp.listen((event) {
+      handleMessage(context, event);
+    });
+  }
+
+  Future<void> handleMessage(
+      BuildContext context, RemoteMessage message) async {
+    // if(message.data['type'] =='msj'){
+    //   Navigator.push(context,
+    //       MaterialPageRoute(builder: (context) => MessageScreen(
+    //         id: message.data['id'] ,
+    //       )));
+    // }
   }
 }
